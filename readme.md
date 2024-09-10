@@ -16,7 +16,7 @@ This project is a Streamlit web application that processes video files to add tr
 
 ## Requirements
 
-- Python 3.7+
+- Python 3.11+
 - Streamlit
 - MoviePy
 - SpeechRecognition
@@ -31,8 +31,8 @@ This project is a Streamlit web application that processes video files to add tr
 
 1. Clone this repository:
    ```
-   git clone https://github.com/yourusername/video-subtitle-processor.git
-   cd video-subtitle-processor
+   git clone https://github.com/burhr2/VideoLingua.git
+   cd VideoLingua
    ```
 
 2. Install the required packages:
@@ -44,7 +44,7 @@ This project is a Streamlit web application that processes video files to add tr
 
 1. Run the Streamlit app:
    ```
-   streamlit run video_subtitle_app.py
+   streamlit run streamlit_app.py
    ```
 
 2. Open your web browser and go to the URL provided by Streamlit (usually `http://localhost:8501`).
