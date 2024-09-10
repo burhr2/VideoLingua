@@ -13,6 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 import matplotlib.font_manager as fm
 from googletrans import Translator
+from langdetect import detect
 
 def setup_logging(log_file):
     logging.basicConfig(
@@ -95,7 +96,7 @@ def find_font(font_type):
         fonts = []
     return fonts[0] if fonts else None
 
-def create_subtitle_clip(text, video_size, font_size=27, font_color="white", bg_color=(0, 0, 0, 150)):
+def create_subtitle_clip(text, video_size, font_size=37, font_color="white", bg_color=(0, 0, 0, 150)):
     font_path = find_font('sans')
     if font_path is None:
         logging.warning("No suitable font found. Using default font.")
@@ -169,6 +170,47 @@ def add_subtitles_to_video(video_path, srt_path, output_video_path):
     final_video.write_videofile(str(output_video_path))
     video.close()
 
+def detect_language(text):
+    try:
+        return detect(text)
+    except:
+        logging.warning("Could not detect language. Defaulting to 'en'")
+        return 'en'
+
+def transcribe_audio(audio_path, src_language=None):
+    logging.info(f"Transcribing audio from {audio_path}")
+    sound = AudioSegment.from_wav(audio_path)
+    chunks = split_on_silence(sound, min_silence_len=700, silence_thresh=sound.dBFS-14, keep_silence=500)
+
+    folder_name = Path("audio-chunks")
+    folder_name.mkdir(exist_ok=True)
+
+    transcriptions = []
+    r = sr.Recognizer()
+
+    current_time = 0
+    for i, audio_chunk in enumerate(chunks, start=1):
+        chunk_filename = folder_name / f"chunk{i}.wav"
+        audio_chunk.export(str(chunk_filename), format="wav")
+
+        chunk_duration = len(audio_chunk) / 1000  # Convert to seconds
+
+        with sr.AudioFile(str(chunk_filename)) as source:
+            audio_listened = r.record(source)
+            try:
+                if src_language:
+                    text = r.recognize_google(audio_listened, language=src_language)
+                else:
+                    text = r.recognize_google(audio_listened)
+                transcriptions.append((current_time, current_time + chunk_duration, text))
+            except sr.UnknownValueError as e:
+                logging.error(f"Error in chunk {i}: {str(e)}")
+
+        current_time += chunk_duration
+        os.remove(chunk_filename)  # Clean up temporary files
+
+    return transcriptions
+
 def main(args):
     setup_logging(args.log_file)
 
@@ -185,7 +227,19 @@ def main(args):
         video_duration = extract_audio_from_video(video_path, audio_path)
         logging.info("Audio extraction complete")
 
-        transcriptions = transcribe_audio(str(audio_path), language=args.src_language)
+        if args.src_language:
+            logging.info(f"Using specified source language: {args.src_language}")
+            transcriptions = transcribe_audio(str(audio_path), src_language=args.src_language)
+            detected_language = args.src_language
+        else:
+            transcriptions = transcribe_audio(str(audio_path))
+            if transcriptions:
+                detected_language = detect_language(transcriptions[0][2])  # Use the first transcription for detection
+                logging.info(f"Detected source language: {detected_language}")
+            else:
+                detected_language = 'en'
+                logging.warning("No transcriptions available. Defaulting to English as source language.")
+
         logging.info("Audio transcription complete")
 
         create_srt_subtitles(transcriptions, srt_path, translate=True, dest_language=args.dest_language)
@@ -204,14 +258,13 @@ def main(args):
             for file in os.listdir('audio-chunks'):
                 os.remove(os.path.join('audio-chunks', file))
             os.rmdir('audio-chunks')
-            suffix = 'sw_correction'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process video and add translated subtitles")
-    parser.add_argument("input_video", default = '/content/The_Greatest_Thing_One_Can_Do_for_His_Children___Shaykh_Abdussalam.mp4', required=True, help="Path to the input video file")
-    parser.add_argument("output_dir", default = '/content/processed_video', required=True, help="Directory to store output files")
-    parser.add_argument("--src_language", default="ar-AR", help="Source language code (default: ar-AR)")
-    parser.add_argument("--dest_language", default="sw", help="Destination language code (default: sw)")
+    parser.add_argument("--input_video", help="Path to the input video file")
+    parser.add_argument("--output_dir", help="Directory to store output files")
+    parser.add_argument("--src_language", help="Source language code (e.g., 'en-US', 'fr-FR'). If not provided, language will be auto-detected.")
+    parser.add_argument("--dest_language", default="en", help="Destination language code (default: en)")
     parser.add_argument("--log_file", default="video_processor.log", help="Log file path (default: video_processor.log)")
     
     args = parser.parse_args()
