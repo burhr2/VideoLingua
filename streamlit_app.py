@@ -233,8 +233,18 @@ def process_video(input_video, output_dir, src_language, dest_language, progress
             os.remove(temp_audio_path)
 
 def main():
-    st.title("Video Subtitle Processor")
-
+    image = Image.open("images/videoLingua.jpeg")
+    st.title("VideoLingua")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("""
+            ### Breaking Language Barriers in Video Content
+        VideoLingua is an innovative app that makes foreign language content accessible. 
+        With a user-friendly interface, you can upload videos and add subtitles in your preferred language, allowing you to easily understand and enjoy global content. 
+        Whether it's news, entertainment, or education, VideoLingua helps you overcome language barriers and share foreign content with your community, expanding your horizons and connecting you to diverse perspectives. 
+        """)
+    with col2:
+        st.image(image, caption="VideoLingua", use_column_width=True)
     uploaded_file = st.file_uploader("Choose a video file", type=["mp4", "avi", "mov"])
     
     if uploaded_file is not None:
