@@ -245,13 +245,13 @@ def main():
         src_language = st.selectbox(
             "Select Source Language",
             ["auto", "en", "ar"],
-            format_func=lambda x: "Auto Detect" if x == "auto" else {"en": "English", "ar": "Arabic"}[x]
+            format_func=lambda x: "Auto Detect (less Accurate)" if x == "auto" else {"en": "English", "ar": "Arabic"}[x]
         )
 
         dest_language = st.selectbox(
             "Select Destination Language",
-            ["en", "ar", "sw"],
-            format_func=lambda x: {"en": "English", "ar": "Arabic", "sw": "Swahili"}[x]
+            ["en", "ar", "sw", "fr"],
+            format_func=lambda x: {"en": "English", "ar": "Arabic", "sw": "Swahili", "fr": "French"}[x]
         )
         # Initialize session state
         if 'output_dir' not in st.session_state:
