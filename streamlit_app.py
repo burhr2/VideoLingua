@@ -240,7 +240,7 @@ def main():
         st.markdown("""
             ### Breaking Language Barriers in Video Content
         VideoLingua is an innovative app that makes foreign language content accessible. 
-        With a user-friendly interface, you can upload videos and add subtitles in your preferred language, allowing you to easily understand and enjoy global content. 
+        With a user-friendly interface, you can upload videos and automatically add subtitles in your preferred language, allowing you to easily understand and enjoy global content. 
         Whether it's news, entertainment, or education, VideoLingua helps you overcome language barriers and share foreign content with your community, expanding your horizons and connecting you to diverse perspectives. 
         """)
     with col2:
