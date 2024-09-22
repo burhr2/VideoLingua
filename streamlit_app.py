@@ -97,7 +97,7 @@ def find_font(font_type):
         fonts = []
     return fonts[0] if fonts else None
 
-def create_subtitle_clip(text, video_size, font_size=37, font_color="white", bg_color=(0, 0, 0, 150)):
+def create_subtitle_clip(text, video_size, font_size=35, font_color="white", bg_color=(0, 0, 0, 150)):
     font_path = find_font('sans')
     if font_path is None:
         logging.warning("No suitable font found. Using default font.")
