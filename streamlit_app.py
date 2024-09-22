@@ -3,8 +3,6 @@ import os
 import logging
 from pathlib import Path
 import tempfile
-import tkinter as tk
-from tkinter import filedialog
 import moviepy.editor as mp
 import speech_recognition as sr
 from pydub import AudioSegment
@@ -17,13 +15,47 @@ import matplotlib.font_manager as fm
 from googletrans import Translator
 from langdetect import detect
 
-def select_directory():
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    root.attributes('-topmost', True)  # Bring the dialog to the front
-    directory = filedialog.askdirectory()
-    root.destroy()
-    return directory
+def list_directories(path):
+    try:
+        return [".."] + [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
+    except PermissionError:
+        st.error("Permission denied to access this directory.")
+        return [".."]
+
+def navigate_directories():
+    if 'current_path' not in st.session_state:
+        st.session_state.current_path = os.path.expanduser("~")  # Start from home directory
+    if 'selected_path' not in st.session_state:
+        st.session_state.selected_path = None
+
+    st.write(f"Current directory: {st.session_state.current_path}")
+
+    # Manual path entry
+    manual_path = st.text_input("Enter path manually:", st.session_state.current_path)
+    if st.button("Go to entered path"):
+        if os.path.isdir(manual_path):
+            st.session_state.current_path = manual_path
+            st.rerun()
+        else:
+            st.error("Invalid directory path.")
+
+    # List and allow selection of directories
+    subdirs = list_directories(st.session_state.current_path)
+    selected_dir = st.selectbox("Select a directory:", subdirs)
+
+    if selected_dir == "..":
+        st.session_state.current_path = os.path.dirname(st.session_state.current_path)
+    elif selected_dir:
+        st.session_state.current_path = os.path.join(st.session_state.current_path, selected_dir)
+
+    if st.button("Navigate to selected"):
+        st.rerun()
+
+    if st.button("Select this directory"):
+        st.session_state.selected_path = st.session_state.current_path
+        return st.session_state.selected_path
+
+    return None
 
 def extract_audio_from_video(video_path, audio_path):
     st.text(f"Extracting audio from {video_path}")
@@ -245,6 +277,7 @@ def main():
         """)
     with col2:
         st.image(image, caption="VideoLingua", use_column_width=True)
+    
     uploaded_file = st.file_uploader("Choose a video file", type=["mp4", "avi", "mov"])
     
     if uploaded_file is not None:
@@ -263,35 +296,32 @@ def main():
             ["en", "ar", "sw", "fr"],
             format_func=lambda x: {"en": "English", "ar": "Arabic", "sw": "Swahili", "fr": "French"}[x]
         )
-        # Initialize session state
-        if 'output_dir' not in st.session_state:
-            st.session_state.output_dir = "output"
 
-        # Create a button to open the directory selector
-        if st.button("Select Output Directory"):
-            chosen_dir = select_directory()
-            if chosen_dir:
-                st.session_state.output_dir = chosen_dir
-
-        # Display the selected directory
-        output_dir = st.text_input("Output directory path", value=st.session_state.output_dir)
-        # output_dir = st.text_input("Enter output directory path", value="output")
-        # Use the output_dir variable in your app
-        st.write(f"Selected output directory: {output_dir}")
-
+        # Let user input the output filename
+        output_filename = st.text_input("Enter output filename (without extension)", value="processed_video")
+        
         if st.button("Process Video"):
-            if not output_dir:
-                st.warning("Please enter an output directory path before processing.")
+            if not output_filename:
+                st.warning("Please enter an output filename before processing.")
             else:
-                progress_bar = st.progress(0)
-                with st.spinner("Processing video..."):
-                    output_video_path = process_video(input_video_path, output_dir, src_language, dest_language, progress_bar)
-                
-                if output_video_path:
-                    st.success("Video processing complete!")
-                    st.video(str(output_video_path))
-                else:
-                    st.error("Video processing failed.")
+                # Create a temporary directory for output
+                with tempfile.TemporaryDirectory() as temp_output_dir:
+                    progress_bar = st.progress(0)
+                    with st.spinner("Processing video..."):
+                        output_video_path = process_video(input_video_path, temp_output_dir, src_language, dest_language, progress_bar)
+                    
+                    if output_video_path:
+                        st.success("Video processing complete!")
+                        st.video(str(output_video_path))
+                        
+                        # Prepare file for download
+                        with open(output_video_path, "rb") as file:
+                            btn = st.download_button(
+                                label="Download processed video",
+                                data=file,
+                                file_name=f"{output_filename}.mp4",
+                                mime="video/mp4"
+                            )
 
         # Clean up temporary input video file
         os.unlink(input_video_path)
