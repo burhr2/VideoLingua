@@ -129,15 +129,20 @@ def create_subtitle_clip(text, video_size, font_size=37, font_color="white", bg_
     text_height = len(lines) * line_height
 
     margin = 20
+    subtitle_position = 0.9  # Adjust this value to move subtitles up or down (0 is top, 1 is bottom)
+
+    bg_top = int(video_size[1] * subtitle_position) - text_height - margin
+    bg_bottom = int(video_size[1] * subtitle_position) + margin
+
     bg_bbox = [
         0,
-        video_size[1] - text_height - 2*margin,
+        bg_top,
         video_size[0],
-        video_size[1]
+        bg_bottom
     ]
     draw.rectangle(bg_bbox, fill=bg_color)
 
-    y_text = video_size[1] - text_height - margin
+    y_text = bg_top + margin
     for line in lines:
         bbox = draw.textbbox((0, 0), line, font=font)
         text_width = bbox[2] - bbox[0]
