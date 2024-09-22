@@ -212,12 +212,6 @@ def transcribe_audio(audio_path, src_language=None):
 
     return transcriptions
 
-def select_output_directory():
-    root = Tk()
-    root.withdraw()
-    folder_selected = filedialog.askdirectory()
-    return folder_selected
-
 def process_video(input_video, output_dir, src_language, dest_language, progress_bar):
     temp_audio_path = Path(output_dir) / 'extracted_audio.wav'
     srt_path = Path(output_dir) / f'subtitles_{dest_language}.srt'
