@@ -97,7 +97,7 @@ def find_font(font_type):
         fonts = []
     return fonts[0] if fonts else None
 
-def create_subtitle_clip(text, video_size, font_size=35, font_color="white", bg_color=(0, 0, 0, 150)):
+def create_subtitle_clip(text, video_size, font_size=33, font_color="white", bg_color=(0, 0, 0, 150)):
     font_path = find_font('sans')
     if font_path is None:
         logging.warning("No suitable font found. Using default font.")
@@ -129,7 +129,7 @@ def create_subtitle_clip(text, video_size, font_size=35, font_color="white", bg_
     text_height = len(lines) * line_height
 
     margin = 20
-    subtitle_position = 0.9  # Adjust this value to move subtitles up or down (0 is top, 1 is bottom)
+    subtitle_position = 0.8  # Adjust this value to move subtitles up or down (0 is top, 1 is bottom)
 
     bg_top = int(video_size[1] * subtitle_position) - text_height - margin
     bg_bottom = int(video_size[1] * subtitle_position) + margin
